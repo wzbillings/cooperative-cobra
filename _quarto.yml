@@ -7,13 +7,26 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - text: "Notes"
+        menu:
+          - text: "Module 1"
+            href: Notes/Module1.qmd
+    right:
+      - icon: github
+        href: https://github.com/wzbillings/cooperative-cobra/
+      - icon: arrow-90deg-up
+        href: https://wzbillings.com/
 
 format:
   html:
-    theme: cosmo
+    theme:
+      light: pulse
+      dark: vapor
     css: styles.css
+    mainfont: "Atkinson Hyperlegible"
     toc: true
+    header-includes: |
+      <link rel="stylesheet" media="screen" href="https://fonts.googleapis.com/css?family=Atkinson+Hyperlegible&display=swap" type="text/css"/>
 
 execute: 
   freeze: auto

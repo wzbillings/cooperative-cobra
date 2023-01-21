@@ -1,11 +1,14 @@
 ---
-title: "cooperative-cobra"
+title: "Zane's Pytorch Adventure"
 ---
 
-This is a Quarto website.
+Welcome! If you wanted to see my notes or projects where I learned about
+Pytorch for the first time, you're in the right place! Hopefully the
+navbar above will get you where you need to go. Right now, there's not
+much else I can think of to add on this place (probably a directory of
+projects once there's more to show), so I've included the same basic information
+you'd find on the main GitHub page.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+{{< include README.qmd >}}
 
-```{r}
-1 + 1
-```
+<!-- END OF FILE -->

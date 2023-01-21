@@ -1,0 +1,8 @@
+---
+title: "Part 1: Tensors and Gradients"
+date: last-modified
+author: Zane Billings
+toc: true
+number-sections: true
+---
+
