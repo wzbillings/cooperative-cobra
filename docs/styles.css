@@ -1,7 +1,7 @@
 /* css styles */
 
 /* atkinson hyperlegible font */
-@import url('https://fonts.googleapis.com/css?family=Atkinson+Hyperlegible&display=swap')
+@import url('https://fonts.googleapis.com/css?family=Atkinson+Hyperlegible|Anonymous+Pro')
 
 /* Set Atkinson Hyperleigible font everywhere
    Not sure why I have to have this in multiple places, but if I remove this

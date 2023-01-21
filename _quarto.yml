@@ -25,9 +25,10 @@ format:
       dark: vapor
     css: styles.css
     mainfont: "Atkinson Hyperlegible"
+    monofont: "Anonymous Pro"
     toc: true
     header-includes: |
-      <link rel="stylesheet" media="screen" href="https://fonts.googleapis.com/css?family=Atkinson+Hyperlegible&display=swap" type="text/css"/>
+      <link rel="stylesheet" media="screen" href="https://fonts.googleapis.com/css?family=Atkinson+Hyperlegible|Anonymous+Pro" type="text/css"/>
 
 execute: 
   freeze: auto

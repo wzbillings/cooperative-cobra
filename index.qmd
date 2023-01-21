@@ -6,7 +6,17 @@ execute:
 
 Welcome! If you wanted to see my notes or projects where I learned about
 Pytorch for the first time, you're in the right place! Hopefully the
-navbar above will get you where you need to go. Right now, there's not
+navbar above will get you where you need to go.
+
+In order to learn Pytorch, I decided to follow along with this
+[free 6 hour course](https://www.freecodecamp.org/news/free-deep-learning-with-pytorch-live-course/)
+offered by `freeCodeCamp`. I also considered their
+[26 hour course](https://www.freecodecamp.org/news/learn-pytorch-for-deep-learning-in-day/),
+but my goal was to learn Pytorch in a few days so I could put it on an
+internship application. Maybe when I have 26 spare hours (hahahahahaha) I'll
+go back and see what I can learn from that one as well.
+
+Right now, there's not
 much else I can think of to add on this place (probably a directory of
 projects once there's more to show), so I've included the same basic information
 you'd find on the main GitHub page.
