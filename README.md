@@ -40,4 +40,10 @@ accept contributions. However, if you want to get in touch with me about
 this repository (or anything else), please see my website for contact
 information: <https://wzbillings.com>.
 
+## Acknowledgements
+
+- As usual, I basically copied this README from [Andrew
+  Heiss](https://github.com/andrewheiss/testy-turtle/blob/main/README.qmd/)
+  , and changed like a handful of words. Thanks, Andrew!
+
 <!-- END OF FILE -->
