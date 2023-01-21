@@ -40,6 +40,13 @@ accept contributions. However, if you want to get in touch with me about
 this repository (or anything else), please see my website for contact
 information: <https://wzbillings.com>.
 
+## Bug Reports
+
+That being said, if you encounter any typos or bugs, please submit them
+on the
+[GitHub Issues page](https://github.com/wzbillings/cooperative-cobra/issues)
+for this project.
+
 ## Acknowledgements
 
 - As usual, I basically copied this README from [Andrew

@@ -1,5 +1,7 @@
 ---
 title: "Zane's Pytorch Adventure"
+execute: 
+  freeze: false
 ---
 
 Welcome! If you wanted to see my notes or projects where I learned about
