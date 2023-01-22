@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Zane Billings">
-<meta name="dcterms.date" content="2023-01-21">
+<meta name="dcterms.date" content="2023-01-22">
 
 <title>cooperative-cobra - Part 2: Linear Regression</title>
 <style>
@@ -167,6 +167,18 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   </li>  
     </ul>
   </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-assignments" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Assignments</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-assignments">    
+        <li class="dropdown-header">1. Boston Housing regression</li>
+        <li>
+    <a class="dropdown-item" href="../Assignments/Assignment1-BostonHousing.html">
+ <span class="dropdown-text">Assignment 1: Boston Housing regression model</span></a>
+  </li>  
+    </ul>
+  </li>
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
@@ -232,7 +244,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">January 21, 2023</p>
+      <p class="date">January 22, 2023</p>
     </div>
   </div>
   
@@ -302,7 +314,7 @@ w_{23} \cdot \text{humidity} + b_2
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> torch.randn(<span class="dv">2</span>, requires_grad <span class="op">=</span> <span class="va">True</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>w<span class="op">;</span> b</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
-<pre><code>tensor([2.4130, 0.3548], requires_grad=True)</code></pre>
+<pre><code>tensor([ 0.6761, -0.9196], requires_grad=True)</code></pre>
 </div>
 </div>
 <p>Apparently, <code>torch.randn</code> generates numbers to fill a tensor of the specified dimension from the standard normal distribution.</p>
@@ -319,11 +331,11 @@ w_{23} \cdot \text{humidity} + b_2
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> model(inputs, w, b)</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
-<pre><code>tensor([[69.1051, 18.5715],
-        [85.4509, 17.9268],
-        [91.3981, 76.7158],
-        [88.2252, -8.8150],
-        [68.9100, 25.7306]], grad_fn=&lt;AddBackward0&gt;)</code></pre>
+<pre><code>tensor([[ -91.2525,   -4.0689],
+        [-125.4677,   -1.6600],
+        [-149.0651,  118.1015],
+        [ -76.1948, -108.2001],
+        [-131.5913,   52.2663]], grad_fn=&lt;AddBackward0&gt;)</code></pre>
 </div>
 </div>
 <p>Hmm, I am guessing that’s pretty bad <code>emoji::emoji("smile")</code>. But we need a way to determine just <strong>how</strong> bad this fit is. This is the role of the <strong>loss function.</strong></p>
@@ -340,7 +352,7 @@ w_{23} \cdot \text{humidity} + b_2
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> mse(fit, targets)</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>loss<span class="op">;</span> loss <span class="op">**</span> <span class="fl">0.5</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>tensor(54.7846, grad_fn=&lt;PowBackward0&gt;)</code></pre>
+<pre><code>tensor(155.7659, grad_fn=&lt;PowBackward0&gt;)</code></pre>
 </div>
 </div>
 <p>The second number is the square root of the MSE, which is in the same units as the target matrix. Of course by interpreting it, we are comparing apples and oranges <code>r emoji::emoji("grin")</code> but we can in some sense say that each prediction differs, on average, from the true response value by <code>python round((loss ** 0.5).item(), 2)</code> units. Note that if we centered and scaled all of our variables before modeling, we wouldn’t have this potential weird unit conflict.</p>
@@ -353,7 +365,7 @@ w_{23} \cdot \text{humidity} + b_2
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>w.grad</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>b.grad</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
-<pre><code>tensor([  4.4179, -65.9741])</code></pre>
+<pre><code>tensor([-190.9143,  -80.7123])</code></pre>
 </div>
 </div>
 <p>Now we know what direction we should go, but we don’t know <strong>how much</strong> we should travel in that direction. This parameter is often called the <em>learning rate</em> of the model, or the <em>step size</em> for gradient descent. Typically we want to take very small steps to ensure we don’t miss the minimum (minima) of the loss function. For this, I’ll use the same value that was used in the tutorial, <code>10^-5</code>.</p>
@@ -364,7 +376,7 @@ w_{23} \cdot \text{humidity} + b_2
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    b <span class="op">-=</span> b.grad <span class="op">*</span> <span class="fl">1e-5</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>w<span class="op">;</span> b</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
-<pre><code>tensor([2.4130, 0.3554], requires_grad=True)</code></pre>
+<pre><code>tensor([ 0.6780, -0.9187], requires_grad=True)</code></pre>
 </div>
 </div>
 <p>We can do a quick check to ensure that the new loss is actually lower.</p>
@@ -374,8 +386,8 @@ w_{23} \cdot \text{humidity} + b_2
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> mse(targets, fit)</span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"New RMSE:"</span>, loss <span class="op">**</span> <span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Old RMSE: tensor(54.7846, grad_fn=&lt;PowBackward0&gt;)
-New RMSE: tensor(47.7372, grad_fn=&lt;PowBackward0&gt;)</code></pre>
+<pre><code>Old RMSE: tensor(155.7659, grad_fn=&lt;PowBackward0&gt;)
+New RMSE: tensor(130.2633, grad_fn=&lt;PowBackward0&gt;)</code></pre>
 </div>
 </div>
 <p>OK, that’s good. Next, we want to zero out the gradients, because apparently <code>torch</code> adds the gradients together at each step, which is weird to me but I guess it is important to how all this works underneath. I guess both this and the <code>no_grad()</code> step are necessary?</p>
@@ -501,118 +513,121 @@ New RMSE: tensor(47.7372, grad_fn=&lt;PowBackward0&gt;)</code></pre>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(yb)</span>
 <span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span> <span class="co"># Just show the first batch of data</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>batch:
-tensor([[ 73.,  67.,  43.],
+<pre><code>batch:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>tensor([[ 92.,  87.,  64.],
+        [ 68.,  97.,  70.],
         [ 69.,  96.,  70.],
-        [ 73.,  66.,  44.],
-        [ 87., 135.,  57.],
-        [ 91.,  88.,  64.]])
-tensor([[ 56.,  70.],
+        [ 88., 134.,  59.],
+        [ 73.,  66.,  44.]])
+tensor([[ 82., 100.],
+        [102., 120.],
         [103., 119.],
-        [ 57.,  69.],
-        [118., 134.],
-        [ 81., 101.]])</code></pre>
+        [118., 132.],
+        [ 57.,  69.]])</code></pre>
 </div>
 </div>
 <p>Especially with having to use that “break” construct there has to be a better way to do this. But I won’t worry about that for now. For now we need to talk about how a linear regression model can be represented as a neural network.</p>
 <div class="cell" data-execution_count="19">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> nn.Linear(<span class="dv">3</span>, <span class="dv">2</span>)</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.weight)</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.bias)</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(model.parameters())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> nn.Linear(<span class="dv">3</span>, <span class="dv">2</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.weight)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.bias)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(model.parameters())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Parameter containing:
-tensor([[ 0.4001,  0.2022,  0.0558],
-        [-0.1958,  0.0031, -0.0481]], requires_grad=True)
+tensor([[-0.3553, -0.1727,  0.1267],
+        [ 0.3969,  0.2706,  0.4205]], requires_grad=True)
 Parameter containing:
-tensor([ 0.2745, -0.0567], requires_grad=True)</code></pre>
+tensor([-0.5584, -0.1727], requires_grad=True)</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="19">
 <pre><code>[Parameter containing:
- tensor([[ 0.4001,  0.2022,  0.0558],
-         [-0.1958,  0.0031, -0.0481]], requires_grad=True),
+ tensor([[-0.3553, -0.1727,  0.1267],
+         [ 0.3969,  0.2706,  0.4205]], requires_grad=True),
  Parameter containing:
- tensor([ 0.2745, -0.0567], requires_grad=True)]</code></pre>
+ tensor([-0.5584, -0.1727], requires_grad=True)]</code></pre>
 </div>
 </div>
 <p>This creates a neural network with 3 inputs and 2 outputs that applies a linear transformation (i.e.&nbsp;<span class="math inline">\(y = Xw^{T} + b\)</span>) to the data. The weights and biases are initialized with random values. Now we can call this model exactly the same way as our handmade bespoke linear regression code.</p>
 <div class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> model(inputs)</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>fit[<span class="dv">0</span>:<span class="dv">3</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> model(inputs)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>fit[<span class="dv">0</span>:<span class="dv">3</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="20">
-<pre><code>tensor([[ 45.4227, -16.2053],
-        [ 58.0406, -20.6729],
-        [ 65.4047, -19.4572]], grad_fn=&lt;SliceBackward0&gt;)</code></pre>
+<pre><code>tensor([[-32.6223,  65.0134],
+        [-39.9849,  86.6711],
+        [-47.2680,  95.0083]], grad_fn=&lt;SliceBackward0&gt;)</code></pre>
 </div>
 </div>
 <p>Pytorch also comes with built-in loss functions, stored in yet another separate module that we must import.</p>
 <div class="cell" data-execution_count="21">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>loss_fn <span class="op">=</span> F.mse_loss</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> loss_fn(model(inputs), targets)</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>loss</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>loss_fn <span class="op">=</span> F.mse_loss</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> loss_fn(model(inputs), targets)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>loss</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="21">
-<pre><code>tensor(7439.5747, grad_fn=&lt;MseLossBackward0&gt;)</code></pre>
+<pre><code>tensor(7599.7290, grad_fn=&lt;MseLossBackward0&gt;)</code></pre>
 </div>
 </div>
 <p>Now we just have to implement an optimization routine. Apparently there are multiple to choose from, but the tutorial recommends stochastic gradient descent, which is one that I like a lot anyways. It’s better in general than deterministic gradient descent, but for linear regression both are overkill. We are very unlikely to have any advantage from SGD over regular GD for this problem.</p>
 <div class="cell" data-execution_count="22">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>opt <span class="op">=</span> torch.optim.SGD(model.parameters(), lr <span class="op">=</span> <span class="fl">1e-5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>opt <span class="op">=</span> torch.optim.SGD(model.parameters(), lr <span class="op">=</span> <span class="fl">1e-5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we just need to put it all together. Apparently we can do <code>opt.step()</code> to update the parameters without needing the <code>no_grad()</code> bit.</p>
 <div class="cell" data-execution_count="23">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_model(num_epochs, model, loss_fn, opt, train_dl):</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">""" This puts it all together."""</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Iterate for a pre-defined number of epochs</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(num_epochs):</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Get the next batch from the DataLoader</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> xb, yb <span class="kw">in</span> train_dl:</span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Fit the model with current parameters</span></span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>            pred <span class="op">=</span> model(xb)</span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Calculate the loss</span></span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">=</span> loss_fn(pred, yb)</span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Compute the gradients</span></span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>            loss.backward()</span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Update the parameters</span></span>
-<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
-<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Reset the gradients</span></span>
-<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
-<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>            </span>
-<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Print current progress every 10th epoch</span></span>
-<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (epoch<span class="op">+</span><span class="dv">1</span>) <span class="op">%</span> <span class="dv">10</span> <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(</span>
-<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Epoch [</span><span class="sc">{}</span><span class="st">/</span><span class="sc">{}</span><span class="st">], Loss: </span><span class="sc">{:.4f}</span><span class="st">'</span>.<span class="bu">format</span>(</span>
-<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>                    epoch<span class="op">+</span><span class="dv">1</span>,</span>
-<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>                    num_epochs,</span>
-<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>                    loss.item()</span>
-<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>                )</span>
-<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>            )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_model(num_epochs, model, loss_fn, opt, train_dl):</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">""" This puts it all together."""</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Iterate for a pre-defined number of epochs</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(num_epochs):</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Get the next batch from the DataLoader</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> xb, yb <span class="kw">in</span> train_dl:</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Fit the model with current parameters</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>            pred <span class="op">=</span> model(xb)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Calculate the loss</span></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">=</span> loss_fn(pred, yb)</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Compute the gradients</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>            loss.backward()</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Update the parameters</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Reset the gradients</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Print current progress every 10th epoch</span></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (epoch<span class="op">+</span><span class="dv">1</span>) <span class="op">%</span> <span class="dv">10</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(</span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Epoch [</span><span class="sc">{}</span><span class="st">/</span><span class="sc">{}</span><span class="st">], Loss: </span><span class="sc">{:.4f}</span><span class="st">'</span>.<span class="bu">format</span>(</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>                    epoch<span class="op">+</span><span class="dv">1</span>,</span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>                    num_epochs,</span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>                    loss.item()</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>            )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now we can run the model. This time I decided to be lazy and just use a fixed number of epochs like the tutorial said.</p>
 <div class="cell" data-execution_count="24">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>torch_fit <span class="op">=</span> fit_model(<span class="dv">100</span>, model, loss_fn, opt, train_dl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>torch_fit <span class="op">=</span> fit_model(<span class="dv">100</span>, model, loss_fn, opt, train_dl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Epoch [10/100], Loss: 454.6852
-Epoch [20/100], Loss: 428.9344
-Epoch [30/100], Loss: 140.7702
-Epoch [40/100], Loss: 163.9316
-Epoch [50/100], Loss: 135.4273
-Epoch [60/100], Loss: 31.5637
-Epoch [70/100], Loss: 70.4598
-Epoch [80/100], Loss: 40.3923
-Epoch [90/100], Loss: 21.5594
-Epoch [100/100], Loss: 18.0169</code></pre>
+<pre><code>Epoch [10/100], Loss: 365.4349
+Epoch [20/100], Loss: 183.7239
+Epoch [30/100], Loss: 227.3204
+Epoch [40/100], Loss: 49.8020
+Epoch [50/100], Loss: 77.8465
+Epoch [60/100], Loss: 60.3499
+Epoch [70/100], Loss: 37.5391
+Epoch [80/100], Loss: 11.0486
+Epoch [90/100], Loss: 19.1640
+Epoch [100/100], Loss: 22.0522</code></pre>
 </div>
 </div>
 <p>Because we are doing SGD, the loss doesn’t have to go down at every step. We can see that we actually got some lower values than the final one. But I guess we are not going to talk about that in this part of the tutorial. The final step is to get some predictions for new values.</p>
 <div class="cell" data-execution_count="25">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>model(torch.tensor([[<span class="fl">75.</span>, <span class="dv">63</span>, <span class="dv">44</span>]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>model(torch.tensor([[<span class="fl">75.</span>, <span class="dv">63</span>, <span class="dv">44</span>]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="25">
-<pre><code>tensor([[55.0307, 68.2699]], grad_fn=&lt;AddmmBackward0&gt;)</code></pre>
+<pre><code>tensor([[54.5522, 68.7808]], grad_fn=&lt;AddmmBackward0&gt;)</code></pre>
 </div>
 </div>
 <p>Well, that was pretty fun. But I do think we should figure out that part of the model not optimizing to the best fit. We could change that in the loop, probably (only call optim.step() if the new loss is lower, maybe). But anyways, that’s the end of this section of the tutorial.</p>
+<p>There is an entire set of review questions, but I think I explained most of them in the tutorial so I decided not to explicitly go through all of them here.</p>
 <!-- END OF FILE -->
 
 

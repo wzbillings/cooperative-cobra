@@ -1,0 +1,236 @@
+---
+title: "Assignment 1: Boston Housing regression model"
+date: last-modified
+author: Zane Billings
+toc: true
+number-sections: true
+---
+
+The original assignment for this section was to find 5 functions in the
+Pytorch documentation, write about them with examples, and write a Medium
+post about it `r emoji::emoji("eyeroll")`. No wonder there's so many
+basically useless Medium articles in existence if people like me who have
+absolutely no idea what they're doing are basically creating worse versions
+of all the documentation and good examples that already exist. So I decided
+to make my own assignment.
+
+I was going to download the dataset from
+[this kaggle competition](https://www.kaggle.com/competitions/boston-housing/overview)
+linked in the tutorial, but it won't let me download the dataset, of course.
+So, I did what any reasonable person would do and found a separate link to
+the dataset on kaggle, and uploaded it to
+[my GitHub](https://github.com/wzbillings/datasets/tree/main/BostonHousing)
+so I don't have to deal with Kaggle's terrible website or worry about the
+data link randomly going away. So feel free to play along at home, if you want.
+Although idk why you would be reading my insane notes instead of just watching
+the same tutorial that I watched.
+
+But regardless, here's the raw link to the CSV to save you some time:
+[link](https://raw.githubusercontent.com/wzbillings/datasets/main/BostonHousing/HousingData.csv).
+
+# Data Import
+
+Ok, so the first thing I have to do is figure out how to load a CSV from a URL
+into python. Then I have to figure out how to convert that into a `torch`
+tensor object. Luckily, I have a lot of patience for this kind of thing. I think
+I will need `pandas` for this, so I went ahead and installed it.
+
+```{python}
+import pandas as pd
+import numpy as np
+
+# Read the CSV direct from GitHub
+url = "".join([
+		"https://raw.githubusercontent.com/wzbillings/datasets/main/",
+		"BostonHousing/HousingData.csv"
+	])
+
+housing = pd.read_csv(url)
+```
+
+OK, before I convert to Tensors, I think I need to get rid of the missing data.
+I'll do a quick and dirty KNN imputation with 5 neighbors, which is apparently
+the default in sklearn. Idk how to tune it to choose a better one with this.
+That's something to look into in the future.
+
+```{python}
+from sklearn.impute import KNNImputer
+
+# Create the imputer
+imputer = KNNImputer(n_neighbors = 5, weights = "uniform")
+imputed_df = pd.DataFrame(imputer.fit_transform(housing))
+imputed_df.columns = housing.columns
+imputed_df.index = housing.index
+```
+
+OK, now I think we can convert to tensor. It kind of annoys me that there is
+apparently no built-in interoperability between sklearn and pandas.
+
+```{python}
+# Convert to TensorDataset
+import torch
+from torch.utils.data import TensorDataset
+
+# Convert from pandas DataFrame to torch tensor
+inputs = torch.tensor(imputed_df.drop("MEDV", axis = 1).values)
+targets = torch.tensor(
+	np.reshape(imputed_df["MEDV"].values, (-1, 1)),
+	# Make sure both tensors are the same type
+	dtype = inputs.dtype
+)
+```
+
+Ok, that only took a few google searches so I guess I remember more about
+`pandas` than I thought. Since there are only `r 506 * 14` entries in the
+data frame, I'm not going to worry about batch loading or whatever.
+
+Of course my first instinct as a data scientist is to plot the data,
+but this course is about tensorflow, not about data visualization in python --
+that's another course that I need to take. I started working on this before
+realizing that you can't show a nice 14x14 scatterplot grid, and then I tried
+to slice the dataframe to get the first six columns PLUS the outcome variable.
+But of course this is apparently a very difficult task in python, even though
+it would be `housing[,c(0:6, 14)]` in R. But I found multiple stackoverflow
+threads talking about how to do this, and apparently the simplest solution is
+`housing[housing.columns[[x for x in range(7)] + [14]]]` which is INSANE to me.
+
+But I'll stop complaining about python again, not being
+able to easily make a scatterplot is *fine* I guess.
+
+So, the first thing we need to do is set up the model, loss function, and
+optimizer. I'll use the linear neural net and MSE loss just like in the
+tutorial, since that gives us a standard linear regression model. I looked
+at the options, and one of them is L-BFGS, which is one of the defaults in `R`
+and I quite like it. So let's use that instead of stochastic gradient descent.
+It's not a stochastic method, but since we're guaranteed to have only one
+extremum with this problem, it will be good.
+
+I'm not really sure what the best way to choose the learning rate is, so I'll
+use the same one from the previous example.
+
+```{python}
+model = torch.nn.Linear(housing.shape[1]-1, 1, dtype = torch.float64)
+loss_fn = torch.nn.functional.mse_loss
+optim = torch.optim.LBFGS(model.parameters(), lr = 1e-5)
+```
+
+From the [documentation](https://pytorch.org/docs/stable/optim.html#optimizer-step-closure),
+apparently LBFGS needs a "closure" argument to
+revaluate the model multiple times, so we have to define that by following
+the example.
+
+```{python}
+def optim_closure():
+	optim.zero_grad()
+	output = model(inputs)
+	loss = loss_fn(output, targets)
+	loss.backward()
+	return loss
+
+```
+
+
+Now we will write our function for fitting the model. I'll go back to
+waiting for the error to converge this time, since I think in general that
+is a better approach than running for a fixed number of epochs. But we
+can also add a maximum iteration number to terminate at.
+
+```{python}
+def fit_model(max_epochs):
+	""" This puts it all together."""
+	# Initiate some constants that will be used in the loop
+	epochs_run = 0
+	loss_diff = 1
+	loss = torch.tensor(1)
+	
+	while ((epochs_run <= max_epochs) and (loss_diff > 1e-4)):
+		# Save the old loss so we can calculate the difference
+		old_loss = loss
+		# Fit the model with current parameters
+		pred = model(inputs)
+		# Calculate the loss
+		loss = loss_fn(pred, targets)
+		# Compute the gradients
+		loss.backward()
+		# Update the parameters with the closure step
+		optim.step(optim_closure)
+		# Reset the gradients
+		optim.zero_grad()
+
+		# Calculate the difference in the loss function
+		loss_diff = abs(loss - old_loss)
+
+		# Increment epochs
+		epochs_run += 1
+		
+		# Print current progress every 100th epoch
+		if (epochs_run) % 100 == 0:
+			print(
+				'Epoch [{}/{}], Loss: {:.4f}'.format(
+					epochs_run,
+					max_epochs,
+					loss.item()
+				),
+				flush = True
+			)
+	
+	# If we reached maximum number of epochs before loss converged, report that
+	if epochs_run == max_epochs:
+		print("Maximum epochs reached without convergence.", flush = True)
+
+```
+
+Now we run the stuff. It should take **all** that long, so I'm willing to
+run it for like 10000 iterations while I get up from the computer and walk
+around. Just remember while this is running, this model would probably
+take less than a second to fit with a regular linear solution solver.
+
+```{python}
+fit_model(1e4)
+```
+
+OK, so we got down to a reasonable loss. I'm pretty sure we could get a better
+solution if we ran for longer but let's take a look at the parameters now.
+
+```{python}
+list(model.parameters())
+```
+
+It's important to remember that the first entry here is the vector of
+slope coefficients, and the bias is the intercept. We can compare this to
+a regular regression model. I'll even do it by hand just to show how much
+we should not be doing linear regression this way using tensors and a numerical
+optimizer.
+
+```{python}
+# Create a vector of ones -- these are used to estimate the "bias".
+ones = torch.tensor(np.ones(shape = [506, 1]))
+# Add the vector of ones as the first column of the imputed input tensor.
+i2 = torch.cat((ones, inputs), dim = -1)
+
+# Calculate the analytical solution: (X^T X)^-1 X^T y.
+soln = torch.linalg.inv(i2.t() @ i2) @ i2.t() @ targets
+
+# Get the predictions: just X beta_hat
+soln_preds = i2 @ soln
+
+# And now calculate the MSE for the analytical solution vs. the one that
+# ran for 10000 iterations.
+soln_mse = loss_fn(soln_preds, targets)
+optim_mse = loss_fn(model(inputs), targets)
+print(
+	"Analytical solution: {:.4f}".format(soln_mse),
+	"Numerical solution:  {:.4f}".format(optim_mse),
+	sep = "\n"
+)
+```
+
+That's a pretty big difference `r emoji::emoji("smile")`. I guess it goes
+to show that good old-fashioned statistics is often way faster than these
+fancy methods that people seem to like. Like I said, it really worries me that
+this numerical approach seems to be a lot of tech/DS enthusiast's first intro
+to linear regression, and it's really not very good. But I believe in the
+next exercises we'll get into some problems that actually need these types of
+models. That's all for now!
+
+<!-- END OF FILE -->

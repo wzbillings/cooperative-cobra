@@ -451,4 +451,8 @@ the model not optimizing to the best fit. We could change that in the loop,
 probably (only call optim.step() if the new loss is lower, maybe). But anyways,
 that's the end of this section of the tutorial.
 
+There is an entire set of review questions, but I think I explained most of
+them in the tutorial so I decided not to explicitly go through all of them
+here.
+
 <!-- END OF FILE -->
