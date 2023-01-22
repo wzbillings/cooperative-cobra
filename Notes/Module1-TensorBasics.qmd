@@ -378,6 +378,7 @@ print("dz/dy:", y.grad)
 So we can get the derivatives for $l$ and $m$, but not for $z$. I truly have
 no idea what the rules of what I'm allowed to autodiff or not are, and the
 documentation is not very understandable for beginners. So maybe I'll have
-to find another tutorial to read.
+to find another tutorial to read. Or maybe the next section will explain it.
+I guess I will find out!
 
 <!-- END OF FILE -->

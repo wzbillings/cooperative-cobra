@@ -33,6 +33,13 @@ International License, [CC BY-SA
 **Code:** all code created by me is licensed under the GNU Affero
 General Public License, [AGPL 3.0](LICENSE.md).
 
+Of course I do not own any code reproduced from the tutorial. Materials from
+freeCodeCamp are licensed under the [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause),
+but there was no license provided along with the code in the video and
+notebook tutorials, if it is different. freeCodeCamp does not directly
+state whether code released by their contributors with official branding
+is required to follow this license as well.
+
 ## Contributions and Contact Info
 
 As this is a learning experience for me, I currently do not intend to
@@ -52,5 +59,7 @@ for this project.
 - As usual, I basically copied this README from [Andrew
   Heiss](https://github.com/andrewheiss/testy-turtle/blob/main/README.qmd/)
   , and changed like a handful of words. Thanks, Andrew!
+- I do not represent freeCodeCamp, and this work is not officially endorsed
+  by freeCodeCamp. However, big thanks to them for posting this material!
 
 <!-- END OF FILE -->

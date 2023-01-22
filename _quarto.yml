@@ -11,7 +11,9 @@ website:
       - text: "Notes"
         menu:
           - text: "Module 1"
-            href: Notes/Module1.qmd
+            href: Notes/Module1-TensorBasics.qmd
+          - text: "Module 2"
+            href: Notes/Module2-LinearRegression.qmd
     right:
       - icon: github
         href: https://github.com/wzbillings/cooperative-cobra/

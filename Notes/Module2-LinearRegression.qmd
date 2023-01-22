@@ -1,0 +1,454 @@
+---
+title: "Part 2: Linear Regression"
+date: last-modified
+author: Zane Billings
+toc: true
+number-sections: true
+---
+
+Okay, I guess in this section we are going to implement gradient descent in
+order to build a linear regression model. In theory, I understand why
+this is good from a pedagogical sense. We can use gradient descent for
+much more complicated models. But as a statistician, it makes me upset that
+there are multiple people who learn this without exposure to stats 101 or
+the theory of linear regression.
+
+Anyways. I'll stop whining and get started. Since this one involves some
+data, I might do a little bit of mixing R and python -- not a lot, but I'm
+definitely not going to learn how to make a nice table in python right now
+when I could always save my python model results in a plain text file and
+load them into a Quarto doc to play nice with `gt` or whatever.
+
+```{python}
+import torch
+import numpy as np
+```
+
+# Training data
+
+Continuing in the great tradition of predictive modeling, we will have separate
+training data and testing data. I don't have a lot else to say about this
+because I'm really just trying to figure out pytorch here, I already
+know a pretty good amount about predictive modeling, regression, and gradient
+descent.
+
+First we have the input data set -- this is a matrix of predictors.
+
+```{python}
+# Input (temp, rainfall, humidity)
+inputs = np.array([[73, 67, 43], 
+                   [91, 88, 64], 
+                   [87, 134, 58], 
+                   [102, 43, 37], 
+                   [69, 96, 70]], dtype='float32')
+```
+
+Now we have the target data set -- the matrix of outcomes. One thing I do
+like about this approach is that we can fit multiple independent outcomes at
+the same time. In many popular regression packages, this is not the case.
+
+```{python}
+# Targets (apples, oranges)
+targets = np.array([[56, 70], 
+                    [81, 101], 
+                    [119, 133], 
+                    [22, 37], 
+                    [103, 119]], dtype='float32')
+```
+
+
+I copied this code from the notes (you can tell because it isn't indented the
+same way I like to indent my code), so the first thing we need to do is
+convert to `torch` tensors.
+
+```{python}
+inputs = torch.from_numpy(inputs)
+targets = torch.from_numpy(targets)
+```
+
+# Linear regression (via gradient descent) from scratch
+
+You can tell we're doing machine learning because they call coefficients
+"weights and biases", which is insane to me because those both mean
+something completely different in the world of normal people. To clarify
+this for myself in the future, the model we are going to fit is
+\begin{align*}
+\text{apples}_i &= w_{11} \cdot \text{temp} + w_{12} \cdot \text{rainfall} +
+w_{13} \cdot \text{humidity} + b_1 \\
+\text{oranges}_i &= w_{21} \cdot \text{temp} + w_{22} \cdot \text{rainfall} +
+w_{23} \cdot \text{humidity} + b_2
+\end{align*}
+which we can express in tensor language as
+$$
+\begin{bmatrix} \text{apples}_1 & \text{oranges}_1 \\ \vdots & \vdots \\
+\text{apples}_n & \text{oranges}_n \end{bmatrix} = \begin{bmatrix} \text{temp}_1
+& \text{rainfall}_1 & \text{humidity}_1 \\ \vdots & \vdots & \vdots \\
+\text{temp}_n & \text{rainfall}_n & \text{humidity}_n \end{bmatrix}
+\begin{bmatrix} w_{11} & w_{21} \\ w_{12} & w_{22} \\ w_{13} & w_{23}
+\end{bmatrix} + \begin{bmatrix} b_1 & b_2 \\ \vdots & \vdots \\ b_1 & b_2
+\end{bmatrix},
+$$
+or more succinctly,
+$$
+\left[ \mathbf{y_1} \ \  \mathbf{y_2} \right] = X w^{T} + b.
+$$
+
+The basic idea of gradient descent is that we'll define a loss function for our
+model, and use the gradient of that loss function to tell us what direction
+we should move in. I.e., how should we adjust the weights and biases of our
+model in order to get a better fit.
+
+## Starting values
+
+We'll start with randomly generated weights
+and biases. (Typically, if we were choosing starting values for a more
+complicated model, I would recommend using the linear regression solutions since
+it is easy and fast!)
+
+```{python}
+w = torch.randn(2, 3, requires_grad = True)
+b = torch.randn(2, requires_grad = True)
+w; b
+```
+
+Apparently, `torch.randn` generates numbers to fill a tensor of the specified
+dimension from the standard normal distribution.
+
+## Initial fit
+
+Next we'll fit our model
+for the first time. We'll do that by defining a function that fits the model,
+and then invoking it. Note that `@` means "matrix multiplication" in `torch`.
+
+```{python}
+def model(x, w, b):
+	""" Fits the linear regression model Y = X * w + b given tensors
+	    X, w, and b of correct dimension."""
+	return x @ w.t() + b
+
+fit = model(inputs, w, b)
+fit
+```
+
+Hmm, I am guessing that's pretty bad `emoji::emoji("smile")`.
+But we need a way to determine just **how** bad
+this fit is. This is the role of the **loss function.**
+
+## Loss function
+
+For this, we'll use
+the normal loss function for linear regression, which is called the **mean**
+**squared error**. To do this, we subtract the target matrix from the
+predictions, square these differences, and take the average of all the
+squared differences. It's interesting to think about this working for two
+independent linear models at the same time, but I think that it does work. I
+won't prove it though, but it intuitively seems like the loss function will
+be a paraboloid and therefore there's only one way to go to get to the
+solution that minimizes the loss for both regressions.
+
+```{python}
+def mse(truth, estimate):
+	""" Computes the MSE, given a truth tensor and an estimate tensor."""
+	diff = truth - estimate;
+	return torch.sum(diff * diff) / diff.numel()
+
+loss = mse(fit, targets)
+loss; loss ** 0.5
+```
+
+The second number is the square root of the MSE, which is in the same units
+as the target matrix. Of course by interpreting it, we are comparing apples
+and oranges `r emoji::emoji("grin")` but we can in some sense say that each
+prediction differs, on average, from the true response value by
+`python round((loss ** 0.5).item(), 2)` units. Note that if we centered and
+scaled all of our variables before modeling, we wouldn't have this potential
+weird unit conflict.
+
+## Adjusting parameter values
+
+Now that we have computed the loss function, we need the gradient in order
+to determine how we should update our weights and biases.
+
+```{python}
+loss.backward()
+w.grad
+b.grad
+```
+
+Now we know what direction we should go, but we don't know **how much** we
+should travel in that direction. This parameter is often called the
+*learning rate* of the model, or the *step size* for gradient descent. Typically
+we want to take very small steps to ensure we don't miss the minimum (minima)
+of the loss function. For this, I'll use the same value that was used in the
+tutorial, `10^-5`.
+
+Technical note: we use the `with torch.no_grad():` statement here to ensure
+that only the `w` and `b` objects are updated here, we don't want this
+to get tracked with their gradients.
+
+```{python}
+with torch.no_grad():
+	w -= w.grad * 1e-5
+	b -= b.grad * 1e-5
+w; b
+```
+
+We can do a quick check to ensure that the new loss is actually lower.
+
+```{python}
+print("Old RMSE:", loss ** 0.5)
+fit = model(inputs, w, b)
+loss = mse(targets, fit)
+print("New RMSE:", loss ** 0.5)
+```
+
+OK, that's good. Next, we want to zero out the gradients, because apparently
+`torch` adds the gradients together at each step, which is weird to me but
+I guess it is important to how all this works underneath. I guess both this
+and the `no_grad()` step are necessary?
+
+```{python}
+w.grad.zero_()
+b.grad.zero_()
+```
+
+## Training for multiple epochs
+
+Now, we could continue to do this manually over and over. But I don't really
+want to do that, so let's write a loop. The tutorial just trains for a fixed
+number of epochs (iterations of the gradient descent algorithm, which are
+for some reason called epochs instead of model fitting iterations), but instead
+of doing that I would prefer to iterate until the loss stops changing.
+
+```{python}
+loss_diff = 2
+old_loss = 1
+epochs_run = 0
+while abs(loss_diff) > 1e-2:
+	# Save the old loss so we don't overwrite it
+	old_loss = loss
+	
+	# Fit the model and calculate the loss
+	fit = model(inputs, w, b)
+	loss = mse(targets, fit)
+	
+	# Update the parameters
+	loss.backward()
+	with torch.no_grad():
+		w -= w.grad * 1e-5
+		b -= b.grad * 1e-5
+		w.grad.zero_()
+		b.grad.zero_()
+	
+	# Calculate the difference in loss so we know if we are done
+	loss_diff = old_loss - loss
+	epochs_run += 1
+```
+
+And to think that the analytic solution only requires the model to be fit once!
+(And even if you use Fisher scoring, 50 is already an extremely high
+number of iterations…) Anyways, we can look at the final fit and loss.
+
+```{python}
+fit
+loss
+epochs_run
+```
+
+# The Pytorch built-in linear neural net
+
+Fortunately, if we want to fit a linear regression using `torch` (for whatever
+reason), we don't have to do this whole thing every time. There are actually
+built-in functions that can implement this model for us.
+
+```{python}
+import torch.nn as nn
+```
+
+We'll use a slightly larger set of training data this time. Again, I just
+copied this from the tutorial.
+
+```{python}
+# Input (temp, rainfall, humidity)
+inputs = np.array([[73, 67, 43], 
+                   [91, 88, 64], 
+                   [87, 134, 58], 
+                   [102, 43, 37], 
+                   [69, 96, 70], 
+                   [74, 66, 43], 
+                   [91, 87, 65], 
+                   [88, 134, 59], 
+                   [101, 44, 37], 
+                   [68, 96, 71], 
+                   [73, 66, 44], 
+                   [92, 87, 64], 
+                   [87, 135, 57], 
+                   [103, 43, 36], 
+                   [68, 97, 70]], 
+                  dtype='float32')
+
+# Targets (apples, oranges)
+targets = np.array([[56, 70], 
+                    [81, 101], 
+                    [119, 133], 
+                    [22, 37], 
+                    [103, 119],
+                    [57, 69], 
+                    [80, 102], 
+                    [118, 132], 
+                    [21, 38], 
+                    [104, 118], 
+                    [57, 69], 
+                    [82, 100], 
+                    [118, 134], 
+                    [20, 38], 
+                    [102, 120]], 
+                   dtype='float32')
+
+inputs = torch.from_numpy(inputs)
+targets = torch.from_numpy(targets)
+```
+
+Instead of manually referring to the inputs and targets separately, we'll
+use a `TensorDataset`, which links these together and allows us to access
+the correct targets and inputs together in a tuple. This seems a lot more
+complicated than having a table with column names as accessors (e.g. R's
+`data.frame`), but I assume there is a performance reason or something for
+doing it like this.
+
+```{python}
+from torch.utils.data import TensorDataset
+
+train_ds = TensorDataset(inputs, targets)
+train_ds[0:3]
+```
+
+So we can see that what is printed here is a tuple of two tensors, with three
+rows each. The first tensor is the first three input rows, and the second
+tensor is the first three target rows. 
+
+We apparently also need to create a `DataLoader` to split the data into batches.
+This apparently provides other utilities as well. I can see why this would
+be helpful with a very large dataset. However, I think it would be more useful
+to stream data — if the entire dataset is large enough to cause problems, maybe
+it shouldn't be stored entirely in memory. The video tutorial mentioned this
+as well, but seemed to ignore the fact that the entire dataset is already
+loaded in memory.
+
+```{python}
+from torch.utils.data import DataLoader
+train_dl = DataLoader(train_ds, 5, shuffle = True)
+```
+
+Apparently the normal way to use this DataLoader is with a `for-in` construct,
+which I don't really like. I know they are often convenient to write, but
+I personally tend to prefer always using indices for my for loop. But I don't
+really know how to do that with this object, so maybe this is one of those
+weird python things that I just have to live with.
+
+```{python}
+for xb, yb in train_dl:
+	print('batch:')
+	print(xb)
+	print(yb)
+	break # Just show the first batch of data
+```
+
+Especially with having to use that "break" construct there has to be a better
+way to do this. But I won't worry about that for now. For now we need
+to talk about how a linear regression model can be represented as a neural
+network.
+
+```{python}
+model = nn.Linear(3, 2)
+print(model.weight)
+print(model.bias)
+list(model.parameters())
+```
+
+This creates a neural network with 3 inputs and 2 outputs that applies a linear
+transformation (i.e. $y = Xw^{T} + b$) to the data. The weights and biases are
+initialized with random values. Now we can call this model exactly the
+same way as our handmade bespoke linear regression code.
+
+```{python}
+fit = model(inputs)
+fit[0:3]
+```
+
+Pytorch also comes with built-in loss functions, stored in yet another
+separate module that we must import.
+
+```{python}
+import torch.nn.functional as F
+loss_fn = F.mse_loss
+
+loss = loss_fn(model(inputs), targets)
+loss
+```
+
+Now we just have to implement an optimization routine. Apparently there are
+multiple to choose from, but the tutorial recommends stochastic gradient
+descent, which is one that I like a lot anyways. It's better in general
+than deterministic gradient descent, but for linear regression both are
+overkill. We are very unlikely to have any advantage from SGD over regular
+GD for this problem.
+
+```{python}
+opt = torch.optim.SGD(model.parameters(), lr = 1e-5)
+```
+
+Now, we just need to put it all together. Apparently we can do
+`opt.step()` to update the parameters without needing the `no_grad()` bit.
+
+```{python}
+def fit_model(num_epochs, model, loss_fn, opt, train_dl):
+	""" This puts it all together."""
+	# Iterate for a pre-defined number of epochs
+	for epoch in range(num_epochs):
+		# Get the next batch from the DataLoader
+		for xb, yb in train_dl:
+			# Fit the model with current parameters
+			pred = model(xb)
+			# Calculate the loss
+			loss = loss_fn(pred, yb)
+			# Compute the gradients
+			loss.backward()
+			# Update the parameters
+			opt.step()
+			# Reset the gradients
+			opt.zero_grad()
+			
+		# Print current progress every 10th epoch
+		if (epoch+1) % 10 == 0:
+			print(
+				'Epoch [{}/{}], Loss: {:.4f}'.format(
+					epoch+1,
+					num_epochs,
+					loss.item()
+				)
+			)
+```
+
+Now we can run the model. This time I decided to be lazy and just use
+a fixed number of epochs like the tutorial said.
+
+```{python}
+torch_fit = fit_model(100, model, loss_fn, opt, train_dl)
+```
+
+Because we are doing SGD, the loss doesn't have to go down at every step. We
+can see that we actually got some lower values than the final one. But I guess
+we are not going to talk about that in this part of the tutorial. The final
+step is to get some predictions for new values.
+
+```{python}
+model(torch.tensor([[75., 63, 44]]))
+```
+
+Well, that was pretty fun. But I do think we should figure out that part of
+the model not optimizing to the best fit. We could change that in the loop,
+probably (only call optim.step() if the new loss is lower, maybe). But anyways,
+that's the end of this section of the tutorial.
+
+<!-- END OF FILE -->

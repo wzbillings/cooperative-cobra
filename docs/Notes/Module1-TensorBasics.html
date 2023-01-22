@@ -158,8 +158,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-notes">    
         <li>
-    <a class="dropdown-item" href="../Notes/Module1.html">
+    <a class="dropdown-item" href="../Notes/Module1-TensorBasics.html">
  <span class="dropdown-text">Module 1</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Notes/Module2-LinearRegression.html">
+ <span class="dropdown-text">Module 2</span></a>
   </li>  
     </ul>
   </li>
@@ -544,7 +548,7 @@ dz/dm: tensor(1.)
 dz/dy: None</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>C:\Users\Zane\AppData\Local\Temp\ipykernel_12256\3256527364.py:14: UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the .grad field to be populated for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\build\aten\src\ATen/core/TensorBody.h:485.)
+<pre><code>C:\Users\Zane\AppData\Local\Temp\ipykernel_11776\3256527364.py:14: UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the .grad field to be populated for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\build\aten\src\ATen/core/TensorBody.h:485.)
   print("dz/dy:", y.grad)</code></pre>
 </div>
 </div>

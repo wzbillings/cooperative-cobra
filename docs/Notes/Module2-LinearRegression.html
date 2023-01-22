@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Zane Billings">
+<meta name="dcterms.date" content="2023-01-21">
+
+<title>cooperative-cobra - Part 2: Linear Regression</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+<link rel="stylesheet" media="screen" href="https://fonts.googleapis.com/css?family=Atkinson+Hyperlegible|Anonymous+Pro" type="text/css">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">cooperative-cobra</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html">
+ <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-notes" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Notes</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-notes">    
+        <li>
+    <a class="dropdown-item" href="../Notes/Module1-TensorBasics.html">
+ <span class="dropdown-text">Module 1</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Notes/Module2-LinearRegression.html">
+ <span class="dropdown-text">Module 2</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/wzbillings/cooperative-cobra/"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://wzbillings.com/"><i class="bi bi-arrow-90deg-up" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#training-data" id="toc-training-data" class="nav-link active" data-scroll-target="#training-data"><span class="toc-section-number">1</span>  Training data</a></li>
+  <li><a href="#linear-regression-via-gradient-descent-from-scratch" id="toc-linear-regression-via-gradient-descent-from-scratch" class="nav-link" data-scroll-target="#linear-regression-via-gradient-descent-from-scratch"><span class="toc-section-number">2</span>  Linear regression (via gradient descent) from scratch</a>
+  <ul class="collapse">
+  <li><a href="#starting-values" id="toc-starting-values" class="nav-link" data-scroll-target="#starting-values"><span class="toc-section-number">2.1</span>  Starting values</a></li>
+  <li><a href="#initial-fit" id="toc-initial-fit" class="nav-link" data-scroll-target="#initial-fit"><span class="toc-section-number">2.2</span>  Initial fit</a></li>
+  <li><a href="#loss-function" id="toc-loss-function" class="nav-link" data-scroll-target="#loss-function"><span class="toc-section-number">2.3</span>  Loss function</a></li>
+  <li><a href="#adjusting-parameter-values" id="toc-adjusting-parameter-values" class="nav-link" data-scroll-target="#adjusting-parameter-values"><span class="toc-section-number">2.4</span>  Adjusting parameter values</a></li>
+  <li><a href="#training-for-multiple-epochs" id="toc-training-for-multiple-epochs" class="nav-link" data-scroll-target="#training-for-multiple-epochs"><span class="toc-section-number">2.5</span>  Training for multiple epochs</a></li>
+  </ul></li>
+  <li><a href="#the-pytorch-built-in-linear-neural-net" id="toc-the-pytorch-built-in-linear-neural-net" class="nav-link" data-scroll-target="#the-pytorch-built-in-linear-neural-net"><span class="toc-section-number">3</span>  The Pytorch built-in linear neural net</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Part 2: Linear Regression</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Zane Billings </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 21, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Okay, I guess in this section we are going to implement gradient descent in order to build a linear regression model. In theory, I understand why this is good from a pedagogical sense. We can use gradient descent for much more complicated models. But as a statistician, it makes me upset that there are multiple people who learn this without exposure to stats 101 or the theory of linear regression.</p>
+<p>Anyways. I’ll stop whining and get started. Since this one involves some data, I might do a little bit of mixing R and python – not a lot, but I’m definitely not going to learn how to make a nice table in python right now when I could always save my python model results in a plain text file and load them into a Quarto doc to play nice with <code>gt</code> or whatever.</p>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="training-data" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Training data</h1>
+<p>Continuing in the great tradition of predictive modeling, we will have separate training data and testing data. I don’t have a lot else to say about this because I’m really just trying to figure out pytorch here, I already know a pretty good amount about predictive modeling, regression, and gradient descent.</p>
+<p>First we have the input data set – this is a matrix of predictors.</p>
+<div class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Input (temp, rainfall, humidity)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> np.array([[<span class="dv">73</span>, <span class="dv">67</span>, <span class="dv">43</span>], </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">91</span>, <span class="dv">88</span>, <span class="dv">64</span>], </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">87</span>, <span class="dv">134</span>, <span class="dv">58</span>], </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">102</span>, <span class="dv">43</span>, <span class="dv">37</span>], </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">69</span>, <span class="dv">96</span>, <span class="dv">70</span>]], dtype<span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we have the target data set – the matrix of outcomes. One thing I do like about this approach is that we can fit multiple independent outcomes at the same time. In many popular regression packages, this is not the case.</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Targets (apples, oranges)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> np.array([[<span class="dv">56</span>, <span class="dv">70</span>], </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">81</span>, <span class="dv">101</span>], </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">119</span>, <span class="dv">133</span>], </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">22</span>, <span class="dv">37</span>], </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">103</span>, <span class="dv">119</span>]], dtype<span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>I copied this code from the notes (you can tell because it isn’t indented the same way I like to indent my code), so the first thing we need to do is convert to <code>torch</code> tensors.</p>
+<div class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> torch.from_numpy(inputs)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> torch.from_numpy(targets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="linear-regression-via-gradient-descent-from-scratch" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Linear regression (via gradient descent) from scratch</h1>
+<p>You can tell we’re doing machine learning because they call coefficients “weights and biases”, which is insane to me because those both mean something completely different in the world of normal people. To clarify this for myself in the future, the model we are going to fit is <span class="math display">\[\begin{align*}
+\text{apples}_i &amp;= w_{11} \cdot \text{temp} + w_{12} \cdot \text{rainfall} +
+w_{13} \cdot \text{humidity} + b_1 \\
+\text{oranges}_i &amp;= w_{21} \cdot \text{temp} + w_{22} \cdot \text{rainfall} +
+w_{23} \cdot \text{humidity} + b_2
+\end{align*}\]</span> which we can express in tensor language as <span class="math display">\[
+\begin{bmatrix} \text{apples}_1 &amp; \text{oranges}_1 \\ \vdots &amp; \vdots \\
+\text{apples}_n &amp; \text{oranges}_n \end{bmatrix} = \begin{bmatrix} \text{temp}_1
+&amp; \text{rainfall}_1 &amp; \text{humidity}_1 \\ \vdots &amp; \vdots &amp; \vdots \\
+\text{temp}_n &amp; \text{rainfall}_n &amp; \text{humidity}_n \end{bmatrix}
+\begin{bmatrix} w_{11} &amp; w_{21} \\ w_{12} &amp; w_{22} \\ w_{13} &amp; w_{23}
+\end{bmatrix} + \begin{bmatrix} b_1 &amp; b_2 \\ \vdots &amp; \vdots \\ b_1 &amp; b_2
+\end{bmatrix},
+\]</span> or more succinctly, <span class="math display">\[
+\left[ \mathbf{y_1} \ \  \mathbf{y_2} \right] = X w^{T} + b.
+\]</span></p>
+<p>The basic idea of gradient descent is that we’ll define a loss function for our model, and use the gradient of that loss function to tell us what direction we should move in. I.e., how should we adjust the weights and biases of our model in order to get a better fit.</p>
+<section id="starting-values" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="starting-values"><span class="header-section-number">2.1</span> Starting values</h2>
+<p>We’ll start with randomly generated weights and biases. (Typically, if we were choosing starting values for a more complicated model, I would recommend using the linear regression solutions since it is easy and fast!)</p>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, requires_grad <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> torch.randn(<span class="dv">2</span>, requires_grad <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>w<span class="op">;</span> b</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<pre><code>tensor([2.4130, 0.3548], requires_grad=True)</code></pre>
+</div>
+</div>
+<p>Apparently, <code>torch.randn</code> generates numbers to fill a tensor of the specified dimension from the standard normal distribution.</p>
+</section>
+<section id="initial-fit" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="initial-fit"><span class="header-section-number">2.2</span> Initial fit</h2>
+<p>Next we’ll fit our model for the first time. We’ll do that by defining a function that fits the model, and then invoking it. Note that <code>@</code> means “matrix multiplication” in <code>torch</code>.</p>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(x, w, b):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">""" Fits the linear regression model Y = X * w + b given tensors</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">        X, w, and b of correct dimension."""</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">@</span> w.t() <span class="op">+</span> b</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> model(inputs, w, b)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre><code>tensor([[69.1051, 18.5715],
+        [85.4509, 17.9268],
+        [91.3981, 76.7158],
+        [88.2252, -8.8150],
+        [68.9100, 25.7306]], grad_fn=&lt;AddBackward0&gt;)</code></pre>
+</div>
+</div>
+<p>Hmm, I am guessing that’s pretty bad <code>emoji::emoji("smile")</code>. But we need a way to determine just <strong>how</strong> bad this fit is. This is the role of the <strong>loss function.</strong></p>
+</section>
+<section id="loss-function" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="loss-function"><span class="header-section-number">2.3</span> Loss function</h2>
+<p>For this, we’ll use the normal loss function for linear regression, which is called the <strong>mean</strong> <strong>squared error</strong>. To do this, we subtract the target matrix from the predictions, square these differences, and take the average of all the squared differences. It’s interesting to think about this working for two independent linear models at the same time, but I think that it does work. I won’t prove it though, but it intuitively seems like the loss function will be a paraboloid and therefore there’s only one way to go to get to the solution that minimizes the loss for both regressions.</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mse(truth, estimate):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">""" Computes the MSE, given a truth tensor and an estimate tensor."""</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    diff <span class="op">=</span> truth <span class="op">-</span> estimate<span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.<span class="bu">sum</span>(diff <span class="op">*</span> diff) <span class="op">/</span> diff.numel()</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> mse(fit, targets)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>loss<span class="op">;</span> loss <span class="op">**</span> <span class="fl">0.5</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>tensor(54.7846, grad_fn=&lt;PowBackward0&gt;)</code></pre>
+</div>
+</div>
+<p>The second number is the square root of the MSE, which is in the same units as the target matrix. Of course by interpreting it, we are comparing apples and oranges <code>r emoji::emoji("grin")</code> but we can in some sense say that each prediction differs, on average, from the true response value by <code>python round((loss ** 0.5).item(), 2)</code> units. Note that if we centered and scaled all of our variables before modeling, we wouldn’t have this potential weird unit conflict.</p>
+</section>
+<section id="adjusting-parameter-values" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="adjusting-parameter-values"><span class="header-section-number">2.4</span> Adjusting parameter values</h2>
+<p>Now that we have computed the loss function, we need the gradient in order to determine how we should update our weights and biases.</p>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>loss.backward()</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>w.grad</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>b.grad</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<pre><code>tensor([  4.4179, -65.9741])</code></pre>
+</div>
+</div>
+<p>Now we know what direction we should go, but we don’t know <strong>how much</strong> we should travel in that direction. This parameter is often called the <em>learning rate</em> of the model, or the <em>step size</em> for gradient descent. Typically we want to take very small steps to ensure we don’t miss the minimum (minima) of the loss function. For this, I’ll use the same value that was used in the tutorial, <code>10^-5</code>.</p>
+<p>Technical note: we use the <code>with torch.no_grad():</code> statement here to ensure that only the <code>w</code> and <code>b</code> objects are updated here, we don’t want this to get tracked with their gradients.</p>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    w <span class="op">-=</span> w.grad <span class="op">*</span> <span class="fl">1e-5</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    b <span class="op">-=</span> b.grad <span class="op">*</span> <span class="fl">1e-5</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>w<span class="op">;</span> b</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<pre><code>tensor([2.4130, 0.3554], requires_grad=True)</code></pre>
+</div>
+</div>
+<p>We can do a quick check to ensure that the new loss is actually lower.</p>
+<div class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Old RMSE:"</span>, loss <span class="op">**</span> <span class="fl">0.5</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> model(inputs, w, b)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> mse(targets, fit)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"New RMSE:"</span>, loss <span class="op">**</span> <span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Old RMSE: tensor(54.7846, grad_fn=&lt;PowBackward0&gt;)
+New RMSE: tensor(47.7372, grad_fn=&lt;PowBackward0&gt;)</code></pre>
+</div>
+</div>
+<p>OK, that’s good. Next, we want to zero out the gradients, because apparently <code>torch</code> adds the gradients together at each step, which is weird to me but I guess it is important to how all this works underneath. I guess both this and the <code>no_grad()</code> step are necessary?</p>
+<div class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>w.grad.zero_()</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>b.grad.zero_()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<pre><code>tensor([0., 0.])</code></pre>
+</div>
+</div>
+</section>
+<section id="training-for-multiple-epochs" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="training-for-multiple-epochs"><span class="header-section-number">2.5</span> Training for multiple epochs</h2>
+<p>Now, we could continue to do this manually over and over. But I don’t really want to do that, so let’s write a loop. The tutorial just trains for a fixed number of epochs (iterations of the gradient descent algorithm, which are for some reason called epochs instead of model fitting iterations), but instead of doing that I would prefer to iterate until the loss stops changing.</p>
+<div class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>loss_diff <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>old_loss <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>epochs_run <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">abs</span>(loss_diff) <span class="op">&gt;</span> <span class="fl">1e-2</span>:</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Save the old loss so we don't overwrite it</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    old_loss <span class="op">=</span> loss</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Fit the model and calculate the loss</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    fit <span class="op">=</span> model(inputs, w, b)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> mse(targets, fit)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Update the parameters</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>        w <span class="op">-=</span> w.grad <span class="op">*</span> <span class="fl">1e-5</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>        b <span class="op">-=</span> b.grad <span class="op">*</span> <span class="fl">1e-5</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>        w.grad.zero_()</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>        b.grad.zero_()</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Calculate the difference in loss so we know if we are done</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    loss_diff <span class="op">=</span> old_loss <span class="op">-</span> loss</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>    epochs_run <span class="op">+=</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And to think that the analytic solution only requires the model to be fit once! (And even if you use Fisher scoring, 50 is already an extremely high number of iterations…) Anyways, we can look at the final fit and loss.</p>
+<div class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>fit</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>loss</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>epochs_run</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>1</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="the-pytorch-built-in-linear-neural-net" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The Pytorch built-in linear neural net</h1>
+<p>Fortunately, if we want to fit a linear regression using <code>torch</code> (for whatever reason), we don’t have to do this whole thing every time. There are actually built-in functions that can implement this model for us.</p>
+<div class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We’ll use a slightly larger set of training data this time. Again, I just copied this from the tutorial.</p>
+<div class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Input (temp, rainfall, humidity)</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> np.array([[<span class="dv">73</span>, <span class="dv">67</span>, <span class="dv">43</span>], </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">91</span>, <span class="dv">88</span>, <span class="dv">64</span>], </span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">87</span>, <span class="dv">134</span>, <span class="dv">58</span>], </span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">102</span>, <span class="dv">43</span>, <span class="dv">37</span>], </span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">69</span>, <span class="dv">96</span>, <span class="dv">70</span>], </span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">74</span>, <span class="dv">66</span>, <span class="dv">43</span>], </span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">91</span>, <span class="dv">87</span>, <span class="dv">65</span>], </span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">88</span>, <span class="dv">134</span>, <span class="dv">59</span>], </span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">101</span>, <span class="dv">44</span>, <span class="dv">37</span>], </span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">68</span>, <span class="dv">96</span>, <span class="dv">71</span>], </span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">73</span>, <span class="dv">66</span>, <span class="dv">44</span>], </span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">92</span>, <span class="dv">87</span>, <span class="dv">64</span>], </span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">87</span>, <span class="dv">135</span>, <span class="dv">57</span>], </span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">103</span>, <span class="dv">43</span>, <span class="dv">36</span>], </span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>                   [<span class="dv">68</span>, <span class="dv">97</span>, <span class="dv">70</span>]], </span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                  dtype<span class="op">=</span><span class="st">'float32'</span>)</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Targets (apples, oranges)</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> np.array([[<span class="dv">56</span>, <span class="dv">70</span>], </span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">81</span>, <span class="dv">101</span>], </span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">119</span>, <span class="dv">133</span>], </span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">22</span>, <span class="dv">37</span>], </span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">103</span>, <span class="dv">119</span>],</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">57</span>, <span class="dv">69</span>], </span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">80</span>, <span class="dv">102</span>], </span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">118</span>, <span class="dv">132</span>], </span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">21</span>, <span class="dv">38</span>], </span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">104</span>, <span class="dv">118</span>], </span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">57</span>, <span class="dv">69</span>], </span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">82</span>, <span class="dv">100</span>], </span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">118</span>, <span class="dv">134</span>], </span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">20</span>, <span class="dv">38</span>], </span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>                    [<span class="dv">102</span>, <span class="dv">120</span>]], </span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>                   dtype<span class="op">=</span><span class="st">'float32'</span>)</span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> torch.from_numpy(inputs)</span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> torch.from_numpy(targets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Instead of manually referring to the inputs and targets separately, we’ll use a <code>TensorDataset</code>, which links these together and allows us to access the correct targets and inputs together in a tuple. This seems a lot more complicated than having a table with column names as accessors (e.g.&nbsp;R’s <code>data.frame</code>), but I assume there is a performance reason or something for doing it like this.</p>
+<div class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> TensorDataset</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>train_ds <span class="op">=</span> TensorDataset(inputs, targets)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>train_ds[<span class="dv">0</span>:<span class="dv">3</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<pre><code>(tensor([[ 73.,  67.,  43.],
+         [ 91.,  88.,  64.],
+         [ 87., 134.,  58.]]),
+ tensor([[ 56.,  70.],
+         [ 81., 101.],
+         [119., 133.]]))</code></pre>
+</div>
+</div>
+<p>So we can see that what is printed here is a tuple of two tensors, with three rows each. The first tensor is the first three input rows, and the second tensor is the first three target rows.</p>
+<p>We apparently also need to create a <code>DataLoader</code> to split the data into batches. This apparently provides other utilities as well. I can see why this would be helpful with a very large dataset. However, I think it would be more useful to stream data — if the entire dataset is large enough to cause problems, maybe it shouldn’t be stored entirely in memory. The video tutorial mentioned this as well, but seemed to ignore the fact that the entire dataset is already loaded in memory.</p>
+<div class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>train_dl <span class="op">=</span> DataLoader(train_ds, <span class="dv">5</span>, shuffle <span class="op">=</span> <span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Apparently the normal way to use this DataLoader is with a <code>for-in</code> construct, which I don’t really like. I know they are often convenient to write, but I personally tend to prefer always using indices for my for loop. But I don’t really know how to do that with this object, so maybe this is one of those weird python things that I just have to live with.</p>
+<div class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> xb, yb <span class="kw">in</span> train_dl:</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">'batch:'</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(xb)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(yb)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span> <span class="co"># Just show the first batch of data</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>batch:
+tensor([[ 73.,  67.,  43.],
+        [ 69.,  96.,  70.],
+        [ 73.,  66.,  44.],
+        [ 87., 135.,  57.],
+        [ 91.,  88.,  64.]])
+tensor([[ 56.,  70.],
+        [103., 119.],
+        [ 57.,  69.],
+        [118., 134.],
+        [ 81., 101.]])</code></pre>
+</div>
+</div>
+<p>Especially with having to use that “break” construct there has to be a better way to do this. But I won’t worry about that for now. For now we need to talk about how a linear regression model can be represented as a neural network.</p>
+<div class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> nn.Linear(<span class="dv">3</span>, <span class="dv">2</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.weight)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.bias)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(model.parameters())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Parameter containing:
+tensor([[ 0.4001,  0.2022,  0.0558],
+        [-0.1958,  0.0031, -0.0481]], requires_grad=True)
+Parameter containing:
+tensor([ 0.2745, -0.0567], requires_grad=True)</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="19">
+<pre><code>[Parameter containing:
+ tensor([[ 0.4001,  0.2022,  0.0558],
+         [-0.1958,  0.0031, -0.0481]], requires_grad=True),
+ Parameter containing:
+ tensor([ 0.2745, -0.0567], requires_grad=True)]</code></pre>
+</div>
+</div>
+<p>This creates a neural network with 3 inputs and 2 outputs that applies a linear transformation (i.e.&nbsp;<span class="math inline">\(y = Xw^{T} + b\)</span>) to the data. The weights and biases are initialized with random values. Now we can call this model exactly the same way as our handmade bespoke linear regression code.</p>
+<div class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> model(inputs)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>fit[<span class="dv">0</span>:<span class="dv">3</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="20">
+<pre><code>tensor([[ 45.4227, -16.2053],
+        [ 58.0406, -20.6729],
+        [ 65.4047, -19.4572]], grad_fn=&lt;SliceBackward0&gt;)</code></pre>
+</div>
+</div>
+<p>Pytorch also comes with built-in loss functions, stored in yet another separate module that we must import.</p>
+<div class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>loss_fn <span class="op">=</span> F.mse_loss</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> loss_fn(model(inputs), targets)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>loss</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<pre><code>tensor(7439.5747, grad_fn=&lt;MseLossBackward0&gt;)</code></pre>
+</div>
+</div>
+<p>Now we just have to implement an optimization routine. Apparently there are multiple to choose from, but the tutorial recommends stochastic gradient descent, which is one that I like a lot anyways. It’s better in general than deterministic gradient descent, but for linear regression both are overkill. We are very unlikely to have any advantage from SGD over regular GD for this problem.</p>
+<div class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>opt <span class="op">=</span> torch.optim.SGD(model.parameters(), lr <span class="op">=</span> <span class="fl">1e-5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, we just need to put it all together. Apparently we can do <code>opt.step()</code> to update the parameters without needing the <code>no_grad()</code> bit.</p>
+<div class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_model(num_epochs, model, loss_fn, opt, train_dl):</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">""" This puts it all together."""</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Iterate for a pre-defined number of epochs</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(num_epochs):</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Get the next batch from the DataLoader</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> xb, yb <span class="kw">in</span> train_dl:</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Fit the model with current parameters</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>            pred <span class="op">=</span> model(xb)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Calculate the loss</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">=</span> loss_fn(pred, yb)</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Compute the gradients</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>            loss.backward()</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Update the parameters</span></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Reset the gradients</span></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Print current progress every 10th epoch</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (epoch<span class="op">+</span><span class="dv">1</span>) <span class="op">%</span> <span class="dv">10</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Epoch [</span><span class="sc">{}</span><span class="st">/</span><span class="sc">{}</span><span class="st">], Loss: </span><span class="sc">{:.4f}</span><span class="st">'</span>.<span class="bu">format</span>(</span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>                    epoch<span class="op">+</span><span class="dv">1</span>,</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>                    num_epochs,</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>                    loss.item()</span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>            )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we can run the model. This time I decided to be lazy and just use a fixed number of epochs like the tutorial said.</p>
+<div class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>torch_fit <span class="op">=</span> fit_model(<span class="dv">100</span>, model, loss_fn, opt, train_dl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Epoch [10/100], Loss: 454.6852
+Epoch [20/100], Loss: 428.9344
+Epoch [30/100], Loss: 140.7702
+Epoch [40/100], Loss: 163.9316
+Epoch [50/100], Loss: 135.4273
+Epoch [60/100], Loss: 31.5637
+Epoch [70/100], Loss: 70.4598
+Epoch [80/100], Loss: 40.3923
+Epoch [90/100], Loss: 21.5594
+Epoch [100/100], Loss: 18.0169</code></pre>
+</div>
+</div>
+<p>Because we are doing SGD, the loss doesn’t have to go down at every step. We can see that we actually got some lower values than the final one. But I guess we are not going to talk about that in this part of the tutorial. The final step is to get some predictions for new values.</p>
+<div class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>model(torch.tensor([[<span class="fl">75.</span>, <span class="dv">63</span>, <span class="dv">44</span>]]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="25">
+<pre><code>tensor([[55.0307, 68.2699]], grad_fn=&lt;AddmmBackward0&gt;)</code></pre>
+</div>
+</div>
+<p>Well, that was pretty fun. But I do think we should figure out that part of the model not optimizing to the best fit. We could change that in the loop, probably (only call optim.step() if the new loss is lower, maybe). But anyways, that’s the end of this section of the tutorial.</p>
+<!-- END OF FILE -->
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
