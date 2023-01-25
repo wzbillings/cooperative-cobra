@@ -14,6 +14,8 @@ website:
             href: Notes/Module1-TensorBasics.qmd
           - text: "Module 2"
             href: Notes/Module2-LinearRegression.qmd
+          - text: "Module 3"
+            href: Notes/Module3-LogisticRegression.qmd
       - text: "Assignments"
         menu:
           - text: "1. Boston Housing regression"
