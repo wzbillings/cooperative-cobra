@@ -170,31 +170,34 @@ entire `torch` ecosystem is insane to me, maybe I need to learn
 `tensorflow` also and see if it makes me want to smack my head into the
 wall the same amount or not.
 
+After reshaping them, I also invoked the `squeeze()` method to ensure that
+the outputs don't have an extra useless dimension.
+
 ```{python}
 train_val = torchvision.datasets.MNIST(
 	root = "static/",
 	train = True,
 	transform = torchvision.transforms.Compose([
 		torchvision.transforms.ToTensor(),
-		torchvision.transforms.Lambda(lambda x: x.reshape(-1, 784))
+		torchvision.transforms.Lambda(lambda x: x.reshape(-1, 784).squeeze())
 		])
 )
 
-test = torchvision.datasets.MNIST(
+test_flat = torchvision.datasets.MNIST(
 	root = "static/",
 	train = False,
 	transform = torchvision.transforms.Compose([
 	torchvision.transforms.ToTensor(),
-	torchvision.transforms.Lambda(lambda x: x.reshape(-1, 784))
+	torchvision.transforms.Lambda(lambda x: x.reshape(-1, 784).squeeze())
 	])
 )
 
-train_ds, val_ds = torch.utils.data.random_split(
+train_flat, val_flat = torch.utils.data.random_split(
 	train_val, [50000, 10000]
 )
 
-train_loader = DataLoader(train_ds, bs, shuffle = True)
-val_loader = DataLoader(val_ds, bs)
+train_loader = DataLoader(train_flat, bs, shuffle = True)
+val_loader = DataLoader(val_flat, bs)
 ```
 
 But I guess who cares if our code is good or optimized if we're doing
@@ -202,7 +205,7 @@ deep learning, right? Anyways now let's check that our model works.
 
 ```{python}
 for img, lbl in train_loader:
-	print(img.shape)
+	print("Original size:", img.shape)
 	out = model(img.squeeze())
 	print(out)
 	break
@@ -223,7 +226,124 @@ them through the softargmax function.
 def softargmax(input, dim = None, _stacklevel = 3, dtype = None):
 	return torch.nn.functional.softmax(input, dim, _stacklevel, dtype)
 
-softargmax(out.squeeze(), dim = 1)
+softargmax(out, dim = 1)
 ```
+
+OK, it looks like everything is working. For every image, we get 10 outputs
+where each one is the predicted probability that our image is a number 0, 1,
+…, 9. We can check that the output probabilies for a given image add up to 1.
+
+```{python}
+torch.sum(softargmax(out, dim = 1)[0]).item()
+```
+
+Now we need to set up the remaining components of the modeling setup: the
+loss function and the optimizer. I'll use the tutorial's suggestion of the
+cross-entropy.
+
+```{python}
+loss_fcn = torch.nn.functional.cross_entropy
+loss = loss_fcn(out, lbl)
+print("Cross-entropy:", round(loss.item(), 4))
+print(
+	"Avg predicted probability of correct label:",
+	round(torch.exp(-loss).item(), 4)
+)
+```
+
+OK, so we can see that our random guess of weights and biases isn't very good.
+The average predicted probability of the correct label is quite small. But
+never fear, the next stem is to train our model. For the optimizer,
+we'll use stochastic gradient descent. We'll also run for a fit number of
+epochs.
+
+For whatever reason the tutorial decided to include undefined methods
+in this function and then randomly say "btw let's add more methods to the
+custom model class" which is still just an insane idea to me. So I kind of
+rewrote this, but it does the same thing. Just without an insane
+custom class that introduces a crap ton of overhead repeated calculations. Like
+I guess it looks fancier if you just define a bunch of custom stuff that
+you don't really need, but it's not like we're repeating a bunch of code that
+we need to dry out or something, it's just kind of pointless to me to do it
+that way.
+
+```{python}
+def fit(epochs, learn_rate, opt_fcn = torch.optim.SGD, verbose = True, tol = 1e-6):
+	optimizer = opt_fcn(model.parameters(), learn_rate)
+	# Container for recording the results in each epoch. I decided to
+	# preallocate the list space because it definitely saves time, I'm just
+	# not sure how much.
+	history = [0] * epochs
+	
+	for i in range(epochs):
+		# Train the model
+		for dat, lbl in train_loader:
+			pred = model(dat)
+			loss = loss_fcn(pred, lbl)
+			loss.backward()
+			optimizer.step()
+			optimizer.zero_grad()
+		
+		# Holder for validation performance during this epoch
+		this_batch = [0] * len(val_loader)
+		j = 1
+		
+		# Evaluate the model
+		for dat, lbl in val_loader:
+			res = model(dat)
+			this_batch[j] = loss_fcn(res, lbl).item()
+			j += 1
+			break
+		
+		history[i] = sum(this_batch) / len(this_batch)
+		
+		# Print every 100th epoch
+		if ((i + 1) % 100 == 0) and verbose:
+			print(
+				'Epoch [{}/{}], Loss: {:.4f}'.format(
+					i + 1,
+					epochs,
+					history[i]
+					)
+				)
+		
+		# Check for early stopping criteria
+		if (i > 1) and (abs(history[i] - history[i - 1]) <= tol):
+			print(
+				"Loss converged, with tolerance {} at epoch {}\n".format(
+					abs(history[i] - history[i - 1]),
+					i + 1
+					),
+				"Stopping early."
+			)
+			break
+	
+	return history
+```
+
+Now we'll fit the model.
+
+```{python}
+hist = fit(10000, 1e-3)
+```
+
+Ok, so the model fitting converged and stopped early which is good.
+
+```{python}
+import numpy as np
+plt.clf()
+plt.plot(
+	list(range(hist.index(0))),
+	np.exp([-x for x in hist[0:hist.index(0)]])
+)
+plt.xlabel("epoch")
+plt.ylabel("pred. prob of true class")
+plt.show()
+```
+
+```{python}
+
+```
+
 
 <!-- END OF FILE -->
